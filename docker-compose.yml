@@ -1,0 +1,16 @@
+# This is a docker-compose file for testing purposes.
+---
+version: '2'
+services:
+  refrepo-ace:
+    build: .
+    volumes:
+      - refrepo:/var/refrepo
+    environment:
+      REFREPO_ACE_ROOT_DIR: "/var/refrepo"
+      REFREPO_ACE_REPO: "refrepo.git"
+      REFREPO_ACE_CONF_DIR: "conf"
+      REFREPO_UPDATER_INTERVAL_SECONDS: 60
+
+volumes:
+  refrepo:
