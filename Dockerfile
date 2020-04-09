@@ -1,8 +1,9 @@
 FROM python:3.8-alpine
 MAINTAINER m@bitsnbites.eu
 
-RUN apk add --update \
-    git \
+RUN apk add --update                            \
+    git                                         \
+    openssh                                     \
   && rm -rf /var/cache/apk/*
 
 ENV REFREPO_ACE_ROOT_DIR=/var/refrepo           \
