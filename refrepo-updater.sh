@@ -23,7 +23,25 @@
 #  3. This notice may not be removed or altered from any source distribution.
 # -----------------------------------------------------------------------------
 
-# TODO(m): Make sure that the environment variables that we use are defined.
+# Check that the environment variables that we use are defined.
+_envs_defined=true
+if [ -z "${REFREPO_ACE_ROOT_DIR}" ] ; then
+  echo "Please define REFREPO_ACE_ROOT_DIR"
+  _envs_defined=false
+fi
+if [ -z "${REFREPO_ACE_CONF_DIR}" ] ; then
+  echo "Please define REFREPO_ACE_CONF_DIR"
+  _envs_defined=false
+fi
+if [ -z "${REFREPO_ACE_REPO}" ] ; then
+  echo "Please define REFREPO_ACE_REPO"
+  _envs_defined=false
+fi
+if [ -z "${REFREPO_UPDATER_INTERVAL_SECONDS}" ] ; then
+  echo "Please define REFREPO_UPDATER_INTERVAL_SECONDS"
+  _envs_defined=false
+fi
+[ "$_envs_defined" = false ] && exit 1
 
 # Make sure that the configuration directory exists and is writable by all
 # users.
