@@ -52,6 +52,7 @@ chmod go+ws "${REFREPO_ACE_ROOT_DIR}/${REFREPO_ACE_CONF_DIR}"
 while true; do
     echo "[$(date -Iseconds)] Updating: ${REFREPO_ACE_ROOT_DIR}/${REFREPO_ACE_REPO}"
     refrepo_ace.py
+    echo "($(date -Iseconds)) Done"
 
     sleep "${REFREPO_UPDATER_INTERVAL_SECONDS}"
 done
