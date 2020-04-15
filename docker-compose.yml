@@ -5,6 +5,7 @@ services:
   refrepo-ace:
     build: .
     volumes:
+      - ssh:/root/.ssh
       - refrepo:/var/refrepo
     environment:
       REFREPO_ACE_ROOT_DIR: "/var/refrepo"
@@ -14,3 +15,4 @@ services:
 
 volumes:
   refrepo:
+  ssh:
