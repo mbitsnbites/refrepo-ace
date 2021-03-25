@@ -184,36 +184,33 @@ def write_remote_confs(remotes, root_dir, conf_dir):
 
 def update_required_remotes(root_dir, conf_dir):
     # Find existing remotes in the reference repo.
-    old_working_dir = os.getcwd()
-    remotes = []
-    try:
-        os.chdir(get_client_repo_root())
+    repo_root = get_client_repo_root()
 
-        remotes += extract_remote_conf(
-            subprocess.run(
-                [find_git_exe(), "remote", "-v"],
-                stdout=subprocess.PIPE,
-                encoding="utf-8",
-                check=True,
-            ).stdout.splitlines()
-        )
+    remotes = extract_remote_conf(
+        subprocess.run(
+            [find_git_exe(), "remote", "-v"],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+            check=True,
+            cwd=repo_root,
+        ).stdout.splitlines()
+    )
 
-        remotes += extract_remote_conf(
-            subprocess.run(
-                [
-                    find_git_exe(),
-                    "submodule",
-                    "foreach",
-                    "--recursive",
-                    "git remote -v",
-                ],
-                stdout=subprocess.PIPE,
-                encoding="utf-8",
-                check=True,
-            ).stdout.splitlines()
-        )
-    finally:
-        os.chdir(old_working_dir)
+    remotes += extract_remote_conf(
+        subprocess.run(
+            [
+                find_git_exe(),
+                "submodule",
+                "foreach",
+                "--recursive",
+                "git remote -v",
+            ],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+            check=True,
+            cwd=repo_root,
+        ).stdout.splitlines()
+    )
 
     # Add the required remotes to the refrepo configuration.
     write_remote_confs(remotes, root_dir, conf_dir)
