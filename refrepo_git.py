@@ -43,9 +43,7 @@ _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
 
 def find_git_exe():
     # Get the search path.
-    search_path = os.getenv("PATH")
-    if not search_path:
-        search_path = os.defpath
+    search_path = os.getenv("PATH", default=os.defpath)
 
     # Iterate over the search path until we find the true git executable.
     this_script_path = Path(os.path.realpath(__file__))
@@ -283,15 +281,8 @@ def main():
         wrap_git_and_exit(sys.argv[1:])
     root_dir = Path(root_dir)
 
-    repo = os.getenv(_REPO_ENV_VAR)
-    if not repo:
-        repo = _DEFAULT_REPO
-    repo = Path(repo)
-
-    conf_dir = os.getenv(_CONF_DIR_ENV_VAR)
-    if not conf_dir:
-        conf_dir = _DEFAULT_CONF_DIR
-    conf_dir = Path(conf_dir)
+    repo = Path(os.getenv(_REPO_ENV_VAR, default=_DEFAULT_REPO))
+    conf_dir = Path(os.getenv(_CONF_DIR_ENV_VAR, default=_DEFAULT_CONF_DIR))
 
     args = inject_reference_repo_arg(sys.argv[1:], root_dir, repo)
     wrap_git(args)
