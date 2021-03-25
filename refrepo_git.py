@@ -201,6 +201,7 @@ def update_required_remotes(root_dir, conf_dir):
             [
                 find_git_exe(),
                 "submodule",
+                "--quiet",
                 "foreach",
                 "--recursive",
                 "git remote -v",
