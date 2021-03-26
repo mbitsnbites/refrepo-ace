@@ -138,9 +138,9 @@ def get_client_repo_root():
 
 def make_remote_name(url):
     if "://" in url:
-        human_name = re.search(r"[a-z]+://[a-z0-9.]+/(.*)\.git$", url).group(1)
+        human_name = re.search(r"[a-z]+://[a-z0-9.]+/(.*)(\.git)?$", url).group(1)
     else:
-        human_name = re.search(r".*:(.*)\.git$", url).group(1)
+        human_name = re.search(r".*:(.*)(\.git)?$", url).group(1)
     human_name = human_name.lower().replace("/", "_")
     short_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:8]
     return human_name + "-" + short_hash
