@@ -43,9 +43,7 @@ _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
 
 def find_git_exe():
     # Get the search path.
-    search_path = os.getenv("PATH")
-    if not search_path:
-        search_path = os.defpath
+    search_path = os.getenv("PATH", default=os.defpath)
 
     # Iterate over the search path until we find the true git executable.
     this_script_path = Path(os.path.realpath(__file__))
@@ -140,9 +138,9 @@ def get_client_repo_root():
 
 def make_remote_name(url):
     if "://" in url:
-        human_name = re.search(r"[a-z]+://[a-z0-9.]+/(.*)\.git$", url).group(1)
+        human_name = re.search(r"[a-z]+://[a-z0-9.]+/(.*)(\.git)?$", url).group(1)
     else:
-        human_name = re.search(r".*:(.*)\.git$", url).group(1)
+        human_name = re.search(r".*:(.*)(\.git)?$", url).group(1)
     human_name = human_name.lower().replace("/", "_")
     short_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:8]
     return human_name + "-" + short_hash
@@ -186,36 +184,34 @@ def write_remote_confs(remotes, root_dir, conf_dir):
 
 def update_required_remotes(root_dir, conf_dir):
     # Find existing remotes in the reference repo.
-    old_working_dir = os.getcwd()
-    remotes = []
-    try:
-        os.chdir(get_client_repo_root())
+    repo_root = get_client_repo_root()
 
-        remotes += extract_remote_conf(
-            subprocess.run(
-                [find_git_exe(), "remote", "-v"],
-                stdout=subprocess.PIPE,
-                encoding="utf-8",
-                check=True,
-            ).stdout.splitlines()
-        )
+    remotes = extract_remote_conf(
+        subprocess.run(
+            [find_git_exe(), "remote", "-v"],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+            check=True,
+            cwd=repo_root,
+        ).stdout.splitlines()
+    )
 
-        remotes += extract_remote_conf(
-            subprocess.run(
-                [
-                    find_git_exe(),
-                    "submodule",
-                    "foreach",
-                    "--recursive",
-                    "git remote -v",
-                ],
-                stdout=subprocess.PIPE,
-                encoding="utf-8",
-                check=True,
-            ).stdout.splitlines()
-        )
-    finally:
-        os.chdir(old_working_dir)
+    remotes += extract_remote_conf(
+        subprocess.run(
+            [
+                find_git_exe(),
+                "submodule",
+                "--quiet",
+                "foreach",
+                "--recursive",
+                "git remote -v",
+            ],
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+            check=True,
+            cwd=repo_root,
+        ).stdout.splitlines()
+    )
 
     # Add the required remotes to the refrepo configuration.
     write_remote_confs(remotes, root_dir, conf_dir)
@@ -283,15 +279,8 @@ def main():
         wrap_git_and_exit(sys.argv[1:])
     root_dir = Path(root_dir)
 
-    repo = os.getenv(_REPO_ENV_VAR)
-    if not repo:
-        repo = _DEFAULT_REPO
-    repo = Path(repo)
-
-    conf_dir = os.getenv(_CONF_DIR_ENV_VAR)
-    if not conf_dir:
-        conf_dir = _DEFAULT_CONF_DIR
-    conf_dir = Path(conf_dir)
+    repo = Path(os.getenv(_REPO_ENV_VAR, default=_DEFAULT_REPO))
+    conf_dir = Path(os.getenv(_CONF_DIR_ENV_VAR, default=_DEFAULT_CONF_DIR))
 
     args = inject_reference_repo_arg(sys.argv[1:], root_dir, repo)
     wrap_git(args)
