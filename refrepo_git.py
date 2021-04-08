@@ -117,7 +117,7 @@ def get_clone_target_path(args):
                     return dir_name
 
     # If we could not determine the target clone directory, bail...
-    raise
+    raise Exception("Clone target directory could not be determined")
 
 
 def get_client_repo_root():
