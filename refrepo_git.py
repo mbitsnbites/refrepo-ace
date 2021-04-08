@@ -113,8 +113,8 @@ def get_clone_target_path(args):
             dir_name = url[(idx + 1) :]
             if dir_name[-4:] == ".git":
                 dir_name = dir_name[:-4]
-                if len(dir_name) > 0:
-                    return dir_name
+            if len(dir_name) > 0:
+                return dir_name
 
     # If we could not determine the target clone directory, bail...
     raise Exception("Clone target directory could not be determined")
