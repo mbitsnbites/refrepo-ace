@@ -253,6 +253,31 @@ def inject_reference_repo_arg(args, root_dir, repo):
     return args
 
 
+def add_alternates(args, root_dir, repo):
+    objects_path = root_dir / repo / "objects"
+    if not objects_path.is_dir():
+        return
+
+    info_path = Path(get_client_repo_root()) / ".git" / "objects" / "info"
+    if not info_path.is_dir():
+        return
+
+    alternates_path = info_path / "alternates"
+    if not alternates_path.exists():
+        alternates_path.touch()
+
+    args = drop_pre_command_git_args(args)
+
+    if len(args) >= 1 and args[0] == "fetch":
+        with open(alternates_path, "r+", encoding="utf-8") as f:
+            for line in f:
+                if Path(line.strip()) == objects_path:
+                    break
+            else:
+                f.write(str(objects_path))
+                f.write("\n")
+
+
 def should_update_remotes(args):
     args = drop_pre_command_git_args(args)
 
@@ -283,6 +308,7 @@ def main():
     conf_dir = Path(os.getenv(_CONF_DIR_ENV_VAR, default=_DEFAULT_CONF_DIR))
 
     args = inject_reference_repo_arg(sys.argv[1:], root_dir, repo)
+    add_alternates(sys.argv[1:], root_dir, repo)
     wrap_git(args)
 
     try:
