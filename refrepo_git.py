@@ -137,10 +137,19 @@ def get_client_repo_root():
 
 
 def make_remote_name(url):
-    if "://" in url:
-        human_name = re.search(r"[a-z]+://[a-z0-9.]+/(.*)(\.git)?$", url).group(1)
-    else:
-        human_name = re.search(r".*:(.*)(\.git)?$", url).group(1)
+    # Scheme + domain regex
+    # See: https://github.com/git/git/blob/77bd3ea9f54f1584147b594abc04c26ca516d987/url.c#L7-L11
+    human_name = re.search(
+        # Proper URL (scheme://[user[:password]@]domain.tld/)
+        r"(^[A-Za-z][A-Za-z0-9+.-]*://.+?/|"
+        # SCP style ([user@]domain.tld:)
+        + r"^[^/]+?:|"
+        # local file
+        + r"^)"
+        # Path to repository (/path/to/repo.git)
+        + r"(.+?)(\.git)?/?$",
+        url,
+    ).group(2)
     human_name = human_name.lower().replace("/", "_")
     short_hash = hashlib.md5(url.encode("utf-8")).hexdigest()[:8]
     return human_name + "-" + short_hash
