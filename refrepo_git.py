@@ -24,6 +24,7 @@
 # -----------------------------------------------------------------------------
 
 import hashlib
+import logging
 import os
 from pathlib import Path
 import re
@@ -39,6 +40,9 @@ _REPO_ENV_VAR = "REFREPO_ACE_REPO"
 
 _DEFAULT_CONF_DIR = "conf"
 _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger()
 
 
 def find_git_exe():
@@ -323,7 +327,8 @@ def main():
     try:
         if should_update_remotes(args):
             update_required_remotes(root_dir, conf_dir)
-    except:
+    except Exception as e:
+        LOGGER.error(e)
         pass
 
 
