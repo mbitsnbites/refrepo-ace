@@ -84,3 +84,8 @@ variables:
 | REFREPO_ACE_ROOT_DIR | - | The root directory of the reference repository and configuration directory (must be specified) |
 | REFREPO_ACE_REPO | refrepo.git | The name of the reference repository |
 | REFREPO_ACE_CONF_DIR | conf | The name of the configuration directory |
+
+Additionally, `refrepo_git` tries to read `REFREPO_ACE_DROP_CREDENTIALS`. If it's
+present and not falsy, the token will be removed from the remote url. For
+example, `http://user:t0k3n@git.host.xz/user/project.git` will become
+`http://git.host.xz/user/project.git`
