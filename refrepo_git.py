@@ -24,6 +24,7 @@
 # -----------------------------------------------------------------------------
 
 import hashlib
+import logging
 import os
 from pathlib import Path
 import re
@@ -39,6 +40,12 @@ _REPO_ENV_VAR = "REFREPO_ACE_REPO"
 
 _DEFAULT_CONF_DIR = "conf"
 _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
+
+_TRUTHY_VALUES = ("1", "on", "t", "true", "y", "yes")
+_DROP_CREDENTIALS_ENV_VAR = "REFREPO_ACE_DROP_CREDENTIALS"
+
+logging.basicConfig(level=logging.INFO)
+LOGGER = logging.getLogger()
 
 
 def find_git_exe():
@@ -162,6 +169,11 @@ def extract_remote_conf(remotes):
         parts = remote.split()
         if parts[2] == "(fetch)":
             url = parts[1]
+            if (
+                os.getenv(_DROP_CREDENTIALS_ENV_VAR, default="False").lower()
+                in _TRUTHY_VALUES
+            ):
+                url = re.sub(r"[\w-]*:[\w-]*@", "", url)
             name = make_remote_name(url)
             result.append({"name": name, "url": url})
 
@@ -323,7 +335,8 @@ def main():
     try:
         if should_update_remotes(args):
             update_required_remotes(root_dir, conf_dir)
-    except:
+    except Exception as e:
+        LOGGER.error(e)
         pass
 
 
