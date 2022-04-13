@@ -257,6 +257,7 @@ def inject_reference_repo_arg(args, root_dir, repo):
 
     original_args = args
     args = drop_pre_command_git_args(args)
+    dropped_args = len(original_args) - len(args)
 
     insert_pos = -1
     if len(args) >= 1 and args[0] == "clone":
@@ -268,6 +269,7 @@ def inject_reference_repo_arg(args, root_dir, repo):
 
     args = original_args
     if insert_pos > 0:
+        insert_pos += dropped_args
         args.insert(insert_pos, "--reference")
         args.insert(insert_pos + 1, str(repo_path))
 
