@@ -81,9 +81,10 @@ variables:
 
 | Name | Default | Description |
 | --- | --- | --- |
-| REFREPO_ACE_ROOT_DIR | - | The root directory of the reference repository and configuration directory (must be specified) |
-| REFREPO_ACE_REPO | refrepo.git | The name of the reference repository |
-| REFREPO_ACE_CONF_DIR | conf | The name of the configuration directory |
+| `REFREPO_ACE_ROOT_DIR` | - | The root directory of the reference repository and configuration directory (must be specified) |
+| `REFREPO_ACE_REPO` | refrepo.git | The name of the reference repository |
+| `REFREPO_ACE_CONF_DIR` | conf | The name of the configuration directory |
+| `REFREPO_ACE_LOG_LEVEL` | WARNING | Log level (DEBUG, INFO, WARNING, ERROR or CRITICAL) |
 
 Additionally, `refrepo_git` tries to read `REFREPO_ACE_DROP_CREDENTIALS`. If it's
 present and not falsy, the token will be removed from the remote url. For
