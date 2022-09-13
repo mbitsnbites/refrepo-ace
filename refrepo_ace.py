@@ -24,6 +24,7 @@
 # -----------------------------------------------------------------------------
 
 import argparse
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -38,6 +39,31 @@ _REPO_ENV_VAR = "REFREPO_ACE_REPO"
 _DEFAULT_CONF_DIR = "conf"
 _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
 
+_DEFAULT_LOG_LEVEL = "WARNING"
+_LOG_LEVEL_ENV_VAR = "REFREPO_ACE_LOG_LEVEL"
+
+LOGGER = logging.getLogger()
+
+
+def git(args):
+    LOGGER.info(f"Invoking: git {' '.join(args)}")
+    try:
+        subprocess.run(["git"] + args, check=True)
+    except Exception as e:
+        LOGGER.error(e)
+        raise
+
+
+def git_capture_stdout(args):
+    LOGGER.info(f"Invoking (silent): git {' '.join(args)}")
+    try:
+        return subprocess.run(
+            ["git"] + args, stdout=subprocess.PIPE, encoding="utf-8", check=True
+        ).stdout
+    except Exception as e:
+        LOGGER.error(e)
+        raise
+
 
 def init_root(root_dir, repo):
     root_dir.mkdir(parents=True, exist_ok=True)
@@ -45,7 +71,7 @@ def init_root(root_dir, repo):
     if repo_path.is_file():
         repo_path.unlink()
     if not repo_path.exists():
-        subprocess.run(["git", "init", "--bare", str(repo_path)], check=True)
+        git(["init", "--bare", str(repo_path)])
 
 
 def get_remotes(root_dir, conf_dir):
@@ -67,12 +93,7 @@ def update(root_dir, repo, conf_dir):
 
     # Find existing remotes in the reference repo.
     existing_remotes_set = set(
-        subprocess.run(
-            ["git", "-C", str(repo_path), "remote"],
-            stdout=subprocess.PIPE,
-            encoding="utf-8",
-            check=True,
-        ).stdout.split()
+        git_capture_stdout(["-C", str(repo_path), "remote"]).split()
     )
 
     # Add new requested remotes.
@@ -81,38 +102,40 @@ def update(root_dir, repo, conf_dir):
     for remote in requested_remotes:
         requested_remotes_set.add(remote["name"])
         if remote["name"] not in existing_remotes_set:
-            subprocess.run(
+            git(
                 [
-                    "git",
                     "-C",
                     str(repo_path),
                     "remote",
                     "add",
                     remote["name"],
                     remote["url"],
-                ],
-                check=True,
+                ]
             )
 
     # Remove remotes that are no longer requested.
     discardable_remotes = existing_remotes_set - requested_remotes_set
     for remote_name in discardable_remotes:
         print("Removing old remote: " + remote_name)
-        subprocess.run(
-            ["git", "-C", str(repo_path), "remote", "remove", remote_name], check=True
-        )
+        git(["-C", str(repo_path), "remote", "remove", remote_name])
 
     # Fetch remotes.
-    subprocess.run(["git", "-C", str(repo_path), "fetch", "--all"], check=True)
+    git(["-C", str(repo_path), "fetch", "--all"])
 
 
 def clean_repo(root_dir, repo):
     repo_path = root_dir / repo
     if repo_path.is_dir():
+        LOGGER.info(f"Removing {repo_path}")
         shutil.rmtree(repo_path)
 
 
 def main():
+    # Initialize the logger.
+    log_level = os.getenv(_LOG_LEVEL_ENV_VAR, default=_DEFAULT_LOG_LEVEL)
+    log_format = "[%(filename)s (%(process)d)] %(levelname)s: %(message)s"
+    logging.basicConfig(level=getattr(logging, log_level), format=log_format)
+
     # Get command line arguments.
     parser = argparse.ArgumentParser(description="Manage a reference repo")
     parser.add_argument(
@@ -155,19 +178,19 @@ def main():
     #   - A default value
     root_dir = args.root_dir if args.root_dir else os.getenv(_ROOT_DIR_ENV_VAR)
     if not root_dir:
-        print("Error: Please specify the root directory")
+        LOGGER.error(f"Please specify the root directory with ${_ROOT_DIR_ENV_VAR}")
         sys.exit(1)
     root_dir = Path(root_dir)
 
-    repo = args.repo if args.repo else os.getenv(_REPO_ENV_VAR)
-    if not repo:
-        repo = _DEFAULT_REPO
-    repo = Path(repo)
+    repo = Path(
+        args.repo if args.repo else os.getenv(_REPO_ENV_VAR, default=_DEFAULT_REPO)
+    )
 
-    conf_dir = args.conf_dir if args.conf_dir else os.getenv(_CONF_DIR_ENV_VAR)
-    if not conf_dir:
-        conf_dir = _DEFAULT_CONF_DIR
-    conf_dir = Path(conf_dir)
+    conf_dir = Path(
+        args.conf_dir
+        if args.conf_dir
+        else os.getenv(_CONF_DIR_ENV_VAR, default=_DEFAULT_CONF_DIR)
+    )
 
     # Optionally clean (remove) the refrence repo before updating.
     if args.clean:

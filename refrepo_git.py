@@ -44,7 +44,9 @@ _CONF_DIR_ENV_VAR = "REFREPO_ACE_CONF_DIR"
 _TRUTHY_VALUES = ("1", "on", "t", "true", "y", "yes")
 _DROP_CREDENTIALS_ENV_VAR = "REFREPO_ACE_DROP_CREDENTIALS"
 
-logging.basicConfig(level=logging.INFO)
+_DEFAULT_LOG_LEVEL = "WARNING"
+_LOG_LEVEL_ENV_VAR = "REFREPO_ACE_LOG_LEVEL"
+
 LOGGER = logging.getLogger()
 
 
@@ -189,8 +191,10 @@ def atomic_write(path, data):
         tmp_path = Path(tmp_file.name)
         try:
             tmp_path.rename(path)
+            return True
         except OSError:
             tmp_path.unlink()
+            return False
 
 
 def write_remote_confs(remotes, root_dir, conf_dir):
@@ -200,7 +204,8 @@ def write_remote_confs(remotes, root_dir, conf_dir):
 
     for remote in remotes:
         target_file = (target_dir / remote["name"]).with_suffix(".remote")
-        atomic_write(target_file, remote["url"])
+        if atomic_write(target_file, remote["url"]):
+            LOGGER.info(f"Registered new remote: {target_file}")
 
 
 def update_required_remotes(root_dir, conf_dir):
@@ -316,14 +321,17 @@ def should_update_remotes(args):
 
 
 def main():
+    # Initialize the logger.
+    log_level = os.getenv(_LOG_LEVEL_ENV_VAR, default=_DEFAULT_LOG_LEVEL)
+    log_format = "[%(filename)s (%(process)d)] %(levelname)s: %(message)s"
+    logging.basicConfig(level=getattr(logging, log_level), format=log_format)
+
     # Options can be configured via (in priority order):
     #   - An environment variable
     #   - A default value
     root_dir = os.getenv(_ROOT_DIR_ENV_VAR)
     if not root_dir:
-        print(
-            "refrepo_git: Please specify the root directory with $" + _ROOT_DIR_ENV_VAR
-        )
+        LOGGER.error(f"Please specify the root directory with ${_ROOT_DIR_ENV_VAR}")
         wrap_git_and_exit(sys.argv[1:])
     root_dir = Path(root_dir)
 
@@ -332,6 +340,7 @@ def main():
 
     args = inject_reference_repo_arg(sys.argv[1:], root_dir, repo)
     add_alternates(sys.argv[1:], root_dir, repo)
+    LOGGER.info(f"Wrapping: git {' '.join(args)}")
     wrap_git(args)
 
     try:
