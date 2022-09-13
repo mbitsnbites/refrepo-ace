@@ -159,15 +159,15 @@ def main():
         sys.exit(1)
     root_dir = Path(root_dir)
 
-    repo = args.repo if args.repo else os.getenv(_REPO_ENV_VAR)
-    if not repo:
-        repo = _DEFAULT_REPO
-    repo = Path(repo)
+    repo = Path(
+        args.repo if args.repo else os.getenv(_REPO_ENV_VAR, default=_DEFAULT_REPO)
+    )
 
-    conf_dir = args.conf_dir if args.conf_dir else os.getenv(_CONF_DIR_ENV_VAR)
-    if not conf_dir:
-        conf_dir = _DEFAULT_CONF_DIR
-    conf_dir = Path(conf_dir)
+    conf_dir = Path(
+        args.conf_dir
+        if args.conf_dir
+        else os.getenv(_CONF_DIR_ENV_VAR, default=_DEFAULT_CONF_DIR)
+    )
 
     # Optionally clean (remove) the refrence repo before updating.
     if args.clean:
