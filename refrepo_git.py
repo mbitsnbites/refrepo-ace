@@ -120,7 +120,7 @@ def get_clone_target_path(args):
         url = args[0]
         idx = url.rfind("/")
         if idx >= 0:
-            dir_name = url[(idx + 1) :]
+            dir_name = url[(idx + 1):]
             if dir_name[-4:] == ".git":
                 dir_name = dir_name[:-4]
             if len(dir_name) > 0:
