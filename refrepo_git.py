@@ -29,6 +29,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -190,6 +191,9 @@ def atomic_write(path, data):
         tmp_file.write(data)
         tmp_path = Path(tmp_file.name)
         try:
+            os.chmod(
+                tmp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
+            )
             tmp_path.rename(path)
             return True
         except OSError:
