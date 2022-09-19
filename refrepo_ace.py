@@ -80,9 +80,14 @@ def get_remotes(root_dir, conf_dir):
     conf_path.mkdir(parents=True, exist_ok=True)
     remote_files = conf_path.glob("*.remote")
     for remote_file in remote_files:
-        remote_name = remote_file.stem
-        remote_url = remote_file.read_text(encoding="utf-8").strip()
-        remotes.append({"name": remote_name, "url": remote_url})
+        try:
+            remote_name = remote_file.stem
+            remote_url = remote_file.read_text(encoding="utf-8").strip()
+            remotes.append({"name": remote_name, "url": remote_url})
+        except OSError as e:
+            # If there are bogus files that we can't read, give a warning but
+            # continue anyway (don't interrupt the good work that we're doing).
+            LOGGER.warning(e)
 
     return remotes
 
