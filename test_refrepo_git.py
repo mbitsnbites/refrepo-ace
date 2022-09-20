@@ -5,6 +5,7 @@ from pathlib import Path
 
 from refrepo_git import inject_reference_repo_arg
 
+
 # Test inject_reference_repo_arg
 class InjectReferenceRepoArg(unittest.TestCase):
     def setUp(self):

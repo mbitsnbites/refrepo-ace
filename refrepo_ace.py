@@ -28,6 +28,7 @@ import logging
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -65,31 +66,57 @@ def git_capture_stdout(args):
         raise
 
 
-def init_root(root_dir, repo):
+def init_root(root_dir, repo, conf_dir):
+    # Create the root directory if necessary.
     root_dir.mkdir(parents=True, exist_ok=True)
+
+    # Create the repo if necessary.
     repo_path = root_dir / repo
     if repo_path.is_file():
         repo_path.unlink()
     if not repo_path.exists():
+        LOGGER.info("Creating bare repo: " + str(repo_path))
         git(["init", "--bare", str(repo_path)])
+
+    # Create the config dir if necessary.
+    conf_path = root_dir / conf_dir
+    if conf_path.is_file():
+        conf_path.unlink()
+    if not conf_path.exists():
+        LOGGER.info("Creating folder: " + str(conf_path))
+        conf_path.mkdir(parents=True, exist_ok=True)
+        os.chmod(
+            conf_path,
+            stat.S_IRUSR
+            | stat.S_IWUSR
+            | stat.S_IXUSR
+            | stat.S_IRGRP
+            | stat.S_IWGRP
+            | stat.S_IXGRP
+            | stat.S_ISGID,
+        )
 
 
 def get_remotes(root_dir, conf_dir):
     remotes = []
     conf_path = root_dir / conf_dir
-    conf_path.mkdir(parents=True, exist_ok=True)
     remote_files = conf_path.glob("*.remote")
     for remote_file in remote_files:
-        remote_name = remote_file.stem
-        remote_url = remote_file.read_text(encoding="utf-8").strip()
-        remotes.append({"name": remote_name, "url": remote_url})
+        try:
+            remote_name = remote_file.stem
+            remote_url = remote_file.read_text(encoding="utf-8").strip()
+            remotes.append({"name": remote_name, "url": remote_url})
+        except OSError as e:
+            # If there are bogus files that we can't read, give a warning but
+            # continue anyway (don't interrupt the good work that we're doing).
+            LOGGER.warning(e)
 
     return remotes
 
 
 def update(root_dir, repo, conf_dir):
+    init_root(root_dir, repo, conf_dir)
     repo_path = root_dir / repo
-    init_root(root_dir, repo)
 
     # Find existing remotes in the reference repo.
     existing_remotes_set = set(
