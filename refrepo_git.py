@@ -189,12 +189,13 @@ def atomic_write(path, data):
             dir=str(path.parent), mode="w", encoding="utf-8", delete=False
         )
         tmp_file.write(data)
+        tmp_file.close()
         tmp_path = Path(tmp_file.name)
         try:
             os.chmod(
                 tmp_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
             )
-            tmp_path.rename(path)
+            tmp_path.replace(path)
             return True
         except OSError:
             tmp_path.unlink()
