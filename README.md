@@ -1,3 +1,5 @@
+## This repo has moved to: https://gitlab.com/bits-n-bites/refrepo-ace
+
 # Refrepo-Ace
 
 This is a tool for maintaining and synchronizing Git reference repositories.
